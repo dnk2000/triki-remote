@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+    <key>CFBundleDevelopmentRegion</key><string>en</string>
+    <key>CFBundleExecutable</key><string>Triki Remote</string>
+    <key>CFBundleIdentifier</key><string>com.triki.remote</string>
+    <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
+    <key>CFBundleName</key><string>Triki Remote</string>
+    <key>CFBundleDisplayName</key><string>Triki Remote</string>
+    <key>CFBundleIconFile</key><string>TrikiRemote.icns</string>
+    <key>CFBundlePackageType</key><string>APPL</string>
+    <key>CFBundleShortVersionString</key><string>1.0</string>
+    <key>CFBundleVersion</key><string>4</string>
+    <key>LSMinimumSystemVersion</key><string>13.0</string>
+    <key>LSUIElement</key><true/>
+    <key>NSPrincipalClass</key><string>NSApplication</string>
+    <key>NSBluetoothAlwaysUsageDescription</key><string>Connect to your TRIKI controller to use its button for system-wide Play/Pause.</string>
+    <key>NSAppleEventsUsageDescription</key><string>Create a Google Meet in Chrome and copy the new meeting link to your clipboard.</string>
+</dict></plist>

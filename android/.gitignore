@@ -1,7 +1,0 @@
-/.gradle/
-/local.properties
-/signing.properties
-/app/build/
-/build/
-*.jks
-*.keystore

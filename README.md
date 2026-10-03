@@ -1,154 +1,162 @@
-# TRIKI Control
+# Triki Remote
 
-<table>
-  <tr>
-    <td width="56%" valign="top"><img src="docs/media/triki-control-desktop.png" alt="TRIKI Control on Windows" width="100%"></td>
-    <td width="25%" valign="top"><a href="https://www.youtube.com/shorts/q6zt8AbzT94"><img src="docs/media/triki-control-demo.gif" alt="TRIKI Control driving Doom" width="100%"></a></td>
-    <td width="19%" valign="top"><img src="docs/media/triki-control-android.jpg" alt="TRIKI Control on Android" width="100%"></td>
-  </tr>
-</table>
+Native macOS menu-bar app for the TRIKI CAP001 controller. Swift, AppKit, CoreBluetooth and UserNotifications; no third-party dependencies. Requires macOS 13 or later.
 
-![Version](https://img.shields.io/badge/version-1.2.0-ff2bd6.svg) [![Tests](https://github.com/koksny/TRIKI-Control/actions/workflows/tests.yml/badge.svg)](https://github.com/koksny/TRIKI-Control/actions/workflows/tests.yml) ![License](https://img.shields.io/badge/license-MIT-green.svg) ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux%20%7C%20Android-lightgrey.svg)
+Repository: [dnk2000/triki-remote](https://github.com/dnk2000/triki-remote).
 
-**Play PC games by waving a bottle cap around.**
-
-TRIKI is a little Bluetooth motion cap that Żabka sold as a toy for a kids' phone app. TRIKI Control is an independent desktop app that pairs with the cap, reads its motion over Bluetooth, and turns your wrist into keyboard and mouse controls. Twist, tilt, tap and flip the cap and it sends input, so the cap can drive anything: a browser game, a media player, a slideshow, or, yes, an entire run through **Doom**.
-
-No drivers, no account. One pairing button, a few profiles to tweak, and the cap is a controller.
-
-> **Heads up:** read [How it works](docs/how-it-works.md) first if you expect a normal joystick. A round cap with the sensors it has *cannot* know which way is "forward", so the controls work like a tank, not a gamepad. That is a physics limit, not a bug, and the whole story is below.
-
----
-
-## Table of contents
-
-- [The 30-second pitch](#the-30-second-pitch)
-- [Controls](#controls)
-- [Why does it steer like a tank?](#why-does-it-steer-like-a-tank)
-- [Quick start](#quick-start)
-- [Profiles](#profiles)
-- [Building from source](#building-from-source)
-- [Platform notes](#platform-notes)
-- [Documentation](#documentation)
-- [Credits, trademarks, license](#credits)
-
----
-
-## The 30-second pitch
-
-The cap is a smooth, round disc with a 6-axis motion sensor (a gyroscope and an accelerometer) and a Bluetooth radio. It has no buttons, no marked front, and no magnetometer, so it genuinely does not know which way it is pointing. TRIKI Control takes the raw motion stream, figures out *what you are doing with it* (twisting? tilting? tapping it on the desk?), and fires a key for each move.
-
-Out of the box the desktop app ships with three ready profile slots: **Game**, **Music**, and **Mouse**. All three use the same tank-style motion controls; Game defaults to game keys, Music to media keys, and Mouse maps left/right twists to continuous pointer movement. The Advanced panel lets you remap every move to a key, media key, mouse button, mouse movement, or short macro.
+Downloads: [GitHub Releases](https://github.com/dnk2000/triki-remote/releases). Preview builds are ad-hoc signed and **not notarized by Apple**.
 
 ## Controls
 
-The default **Game** profile is a rotation-invariant "tank" scheme. Every control works no matter how the cap happens to be turned, so you never have to "aim" the cap first:
+- **Media mode:** single press = global Play/Pause; rotate = system volume. In Settings, **Reverse volume rotation** changes direction.
+- **Work mode:** single press creates a Google Meet in Google Chrome. **Copy Meet link to clipboard** is enabled by default; turn it off to open meetings without touching the clipboard. A notification confirms successful copying.
+- **Double press:** two presses within 350 ms toggle Media ↔ Work and show a notification. Single actions wait 350 ms so double presses cannot also pause media or create a meeting. Holding never repeats. Three presses produce a double followed by a single.
 
-| Do this with the cap | In the game |
-| --- | --- |
-| **Twist** it flat on the table, left or right | **Turn** left / right |
-| **Tilt** it in any direction and hold | **Walk forward** |
-| **Tap** it straight down on the desk | **Fire** |
-| **Flip** it upside-down | **Run** (holds Shift) |
-| **Slide** it flat across the desk | **Use / open door** |
+Modes can also be selected directly in the menu. Settings are saved automatically. Work settings hide media controls. The menu provides Settings, Accessibility permissions, connection status, and Quit.
 
-Two tips that make it click:
+## Build and install
 
-- **Steer and walk are separate moves.** Twist *or* tilt, not both at once. Twist to aim, then tilt to go. It feels like driving a tank, because it basically is one.
-- **Shoot clean.** A fire-tap is a flat, straight-down knock on the table. If you twist while you tap, the cap reads it as a turn instead, so keep the tap square.
+### Install from a DMG
 
-Every binding is editable in **Advanced > Action Mapping**, and the turn tuning sliders are saved per profile. Game can keep the steady steering threshold, while Music can use a lower twist threshold for volume control.
+Open `Triki-Remote-1.0.dmg`, quit any running copy, and drag **Triki Remote.app** onto **Applications**. Eject the image and launch the app from `/Applications`. Grant the permissions described below. No developer tools are needed on the receiving Mac.
 
-## Why does it steer like a tank?
+If you previously used `install.sh`, quit and remove the old `~/Applications/Triki Remote.app` copy to avoid launching the wrong version. Accessibility may need its old entry removed and the `/Applications` copy added again.
 
-Short version: **I tried hard to give it normal "push-left-go-left" controls, and it is physically impossible with this hardware.** Here is the honest reason.
+Create the DMG locally with Apple's Command Line Tools or Xcode:
 
-The cap has *two* sensors: a gyroscope (how fast it is rotating) and an accelerometer (which way gravity is pulling, plus any shove). That is a "6-axis IMU". What it is *missing* is a third sensor, a **magnetometer**, a compass. Phones and real game controllers have one; this toy does not, and there is no magnet inside to fake it.
-
-Without a compass, and with no marked front on a perfectly round cap, there is **no way to recover heading**, the direction the cap is pointing in the real world. The gyro tells you it is *turning*, but a tiny, unavoidable error builds up every second and the estimate drifts away within moments. So "north" is unknowable. And if you cannot tell north from south, you cannot build a control where *pushing left always goes left*, because "left" keeps changing as the cap rotates in your hand.
-
-You can see the same wall in the official Żabka games: every one of them is built around a *single* axis of motion. That is not a lack of ambition. The instant the cap is asked to track two things at once, the signals smear together, the noise wins, and it can no longer tell which one you meant. One clean axis is all the hardware reliably gives.
-
-So the way out is to only use signals that **do not depend on heading**: how much it twists (not which way it ends up facing), how far it tilts (not in which world-direction), a sharp downward tap, an upside-down flip, a flat slide. Those are all heading-free, so they work however the cap is turned. That is the tank scheme, and it is the most controllable thing I could wring out of two sensors. With a magnetometer or a magnet glued inside, a full directional joystick would be straightforward; without one, this is the ceiling.
-
-The long version, with the math and the dead ends, is in **[docs/how-it-works.md](docs/how-it-works.md)**.
-
-## Quick start
-
-### Run it (Windows)
-
-1. Grab `TRIKI-Control.exe` from the [**Releases**](https://github.com/koksny/TRIKI-Control/releases) page and run it. (Windows SmartScreen may warn about an unknown publisher; it is an unsigned hobby build, so choose "More info > Run anyway".)
-2. The app opens its own little window. If it does not, open **http://127.0.0.1:8766/** in a browser.
-3. Click **Connect**, then press the cap's **physical button once** when asked.
-4. Wait until the app says **Connected** and the connect button changes to **Disconnect**. Hold **Test LED** to confirm the cap is listening.
-5. Pick a game (or leave it on the default), click **TURN CONTROL ON**, click into your game, and play.
-
-That is it. No install. On Windows, settings live in `%APPDATA%\TRIKI\config.json`.
-
-Closing the window with **X** keeps TRIKI Control running by the clock and shows a notification explaining what happened. Choose **Disable control** from the tray to stop sending input, or use the red **Quit** button in the app to close it completely. Control always starts OFF and is also turned OFF if the Bluetooth connection drops.
-
-### Run it (Android)
-
-1. Download `TRIKI-Control-Android-1.2.0.apk` from [**Releases**](https://github.com/koksny/TRIKI-Control/releases), open it on a phone running Android 8.0 or newer, and allow installation from that source.
-2. Accept the in-app explanation and enable the **TRIKI Control: touch control** accessibility service. Android 13 or newer may require **Allow restricted settings** first from TRIKI Control's entry on the **All apps** screen.
-3. Return to TRIKI Control, connect the cap, choose an output for each motion, and set the on-screen joystick/button positions for your game.
-4. Turn **Game control** on, switch to the game, and use the cap. No root, ADB, or Shizuku is required.
-
-Android deliberately protects sideloaded accessibility services, so the restricted-settings confirmation cannot be skipped by the app. Installing from a trusted app store is the platform-supported way to avoid that sideloading step.
-
-### Run it from Python
-
-See [Building from source](#building-from-source) if you would rather run the code directly or build your own executable.
-
-## Profiles
-
-- **Game** is the tank scheme above, run by the body-frame motion engine. This is the one built and tuned for actually playing through Doom.
-- **Music** is a second built-in profile slot with the same controls as Game, but its default mappings are media controls: volume down/up, previous/next track, mute, and play/pause. Volume twists are sent as repeated media-key taps, so holding a twist behaves more like a volume knob.
-- **Mouse** keeps the Game controls but maps left/right twists to continuous cursor movement by default. Slow twists make small adjustments and faster twists move the pointer faster.
-
-Profiles can be selected, edited, exported, imported, reset one at a time, or reset as a whole set. Bindings accept single keys (`w`, `left`, `enter`, `space`, `=`), media keys (`volume-up`, `media-play-pause`), mouse buttons and directions (`mouse-left-button`, `mouse-move-up`), and short macros (`left, 100ms, enter`). Mouse movement speed is saved separately for each profile.
-
-There is a hidden diagnostics page at **http://127.0.0.1:8766/debug** and a raw JSON feed at **/diagnostics** if you ever need to see what the cap is actually sending.
-
-## Building from source
-
-You need Python 3.11+ and the cap. Full desktop instructions (including the PyInstaller specs that produce the standalone executables) are in **[docs/build.md](docs/build.md)**. Android has its own Gradle project and build notes in **[android/README.md](android/README.md)**. The desktop short version:
-
-```bash
-python -m venv .venv
-# Windows:  .\.venv\Scripts\python.exe -m pip install -r requirements.txt
-# macOS/Linux:  source .venv/bin/activate && pip install -r requirements.txt
-python src/triki_app.py
+```sh
+./package-dmg.sh
 ```
 
-The application modules live under `src/` as flat `triki_*.py` files. Start at `src/triki_app.py` (the UI and BLE loop) and `src/triki_motion_engine.py` (the tank-scheme controller that took most of the tuning).
+The script builds for Apple Silicon and Intel, packages the app, an Applications shortcut, installation instructions and upstream notices, then verifies the compressed disk image. Output: `build/Triki-Remote-1.0.dmg`. Packaging does not install or launch the app. This local DMG is not notarized; packaging alone does not remove Gatekeeper warnings for downloaded apps. See Distribution status below for public releases.
 
-## Platform notes
+### Install from source
 
-- **Windows.** Keyboard and mouse output uses `SendInput` (scancodes for normal keys, virtual-key events for media keys). A few games with aggressive anti-cheat ignore synthetic input; most do not.
-- **macOS.** Keyboard and mouse output goes through Quartz/CoreGraphics and needs **Accessibility** permission (System Settings > Privacy & Security > Accessibility). The packaged app carries the Bluetooth usage strings CoreBluetooth requires.
-- **Linux.** Keyboard and mouse output is written to `/dev/uinput`, which needs the right permissions; the BLE UI also needs a system WebKit/Qt backend that pip cannot install. See [docs/linux.md](docs/linux.md).
-- **Android.** Touch output uses an `AccessibilityService` and works without root. Android 13+ may gate a sideloaded build behind **Allow restricted settings**; some games can also reject generated accessibility gestures.
+Install Apple's Command Line Tools or Xcode, then:
 
-## Documentation
+```sh
+git clone https://github.com/dnk2000/triki-remote.git
+cd triki-remote
+./test.sh
+./install.sh
+```
 
-- [How it works](docs/how-it-works.md): the two-sensor problem, heading drift, why the official games are single-axis, and the rotation-invariant control design.
-- [Controls & play guide](docs/controls.md): every move, what it binds to, and how to get clean input.
-- [Building & packaging](docs/build.md): dev setup and standalone builds for all three platforms.
-- [BLE protocol notes](docs/protocol.md): service UUIDs, the stream-start commands, the LED command, and the six motion channels.
-- [Linux notes](docs/linux.md): uinput and the GUI backend.
-- [Android port](android/README.md): installation, touch mapping, build requirements, and platform limitations.
+The installer builds and verifies the app, stops the running copy, replaces `~/Applications/Triki Remote.app`, registers it with macOS, and launches it. Staging prevents failed compilation/signing from replacing a working build. Future updates use the same command and bundle ID (`com.triki.remote`). Only one instance runs at a time.
 
-## Credits
+Build without installing:
 
-Made by **[Wojciech "Koksny" Górny](https://koksny.com)**.
+```sh
+./build.sh
+open "build/Triki Remote.app"
+```
 
-The cap itself is `Triki` / model `CAP001`, produced by Caps Apps and distributed by Żabka.
+The default build targets the current architecture. For Apple Silicon and Intel:
 
-### Trademarks & affiliation
+```sh
+TRIKI_ARCHS="arm64 x86_64" ./build.sh
+```
 
-TRIKI Control is an independent, open-source project. It is **not** affiliated with, endorsed by, or sponsored by Caps Apps, Żabka, or their partners. "TRIKI", "Żabka", and related names and logos belong to their respective owners. This project ships none of their software or assets, only an original, clean-room reimplementation of how to talk to the cap over standard Bluetooth.
+Alternatively open `TrikiMediaButton.xcodeproj`, select the **TrikiMediaButton** scheme and **My Mac**, then Run. The internal target name is retained; the product is **Triki Remote.app**. Full Xcode is required for `xcodebuild`:
 
-## License
+```sh
+xcodebuild -project TrikiMediaButton.xcodeproj -scheme TrikiMediaButton \
+  -configuration Release -derivedDataPath build/Xcode build
+```
 
-Released under the [MIT License](LICENSE).
+## Permissions
+
+- **Bluetooth:** connects to TRIKI. Wake the controller and disconnect it from other apps/phones first.
+- **Accessibility:** Media mode posts native system media-key down/up events. Allow Triki Remote under System Settings → Privacy & Security → Accessibility.
+- **Automation → Google Chrome:** required only when automatic Meet link copying is enabled. The app creates a tab and reads that specific tab's URL through Apple's system `osascript` utility. No Chrome JavaScript permission or third-party automation app is needed.
+- **Notifications:** mode changes, copied-link confirmation, and Meet errors. macOS Focus/settings may suppress banners; errors are also logged.
+
+Sign in to Google in the Chrome profile that handles external links. Google handles account and camera/microphone prompts. Media mode follows macOS's active Now Playing session; some audio outputs do not support software volume. No Apple Music-specific control, media-library access, or Input Monitoring is used.
+
+Local builds use ad-hoc signing. Rebuilding can require re-enabling macOS permissions. Preferences from the original `com.triki.media-button` identity are migrated once; permissions cannot be migrated by the app.
+
+## Reliability and implementation
+
+Four Swift files:
+
+| File | Responsibility |
+| --- | --- |
+| `App.swift` | Menu, settings, preferences, notifications and lifecycle |
+| `TrikiBluetoothManager.swift` | BLE connection, frame assembly, button gestures and rotation detection |
+| `MediaKeyController.swift` | Native Play/Pause and volume key events |
+| `MeetingController.swift` | Nonblocking Chrome automation, timeouts, cancellation and clipboard handling |
+
+BLE connection/setup has a 20-second deadline. After initialization, no valid IMU frames within five seconds triggers reconnection. Failed connections retry after 2, 4, 8… seconds, capped at 30; receiving valid data resets the delay. Bluetooth power-on restarts scanning. Disconnects cancel pending button actions and incomplete frames but preserve the last button state, avoiding a repeat when reconnecting with a held button. A release and re-press entirely while disconnected cannot be observed.
+
+Rotation requires two qualifying samples, rejects jitter/sideways motion, and sends at most one volume step per 180 ms. Incoming BLE bursts cannot produce a burst of volume-key events. Thresholds use raw gyro units because the device scale is undocumented.
+
+Meet automation never blocks the UI/Bluetooth queue. Script calls time out (60 seconds for startup/permission, 10 seconds for URL reads); the app waits up to 90 seconds for a meeting URL. It tracks a tab by ID even when tabs/windows change. Only canonical HTTPS `meet.google.com/xxx-xxxx-xxx` links are copied, without account/query parameters. Sign-in pages and `/new` are never copied. Starting another meeting or disabling copying cancels the earlier pending copy; stale results cannot overwrite the clipboard. Turning copying back on applies to the next meeting. Quitting cancels outstanding work.
+
+## Validation
+
+```sh
+./test.sh
+```
+
+Checks cover single/double/triple presses, long holds, invalid/chunked frames, button state across reconnects, rotation direction/jitter/rate limiting, media-key encoding, Meet URL validation, actual local AppleScript execution, errors, timeouts, cancellation, and main-queue responsiveness. Tests do not post media keys, create meetings, or modify the clipboard.
+
+An existing two-press hardware capture can additionally be replayed:
+
+```sh
+./test.sh build/triki-diagnostic.log
+```
+
+That optional capture is local and ignored by Git. Temporary raw-packet logging and the temporary notification-test launch flag have been removed from the app.
+
+Manual hardware checks remain necessary: connect/wake the cap; press/hold/release; double-press in both modes; rotate; power-cycle the cap and Mac Bluetooth; create Meet with copying on/off; cancel copying while a tab loads; verify notifications and denied-permission behavior. Automated checks do not certify radio reliability or Google's live website.
+
+For logs, use Console.app filtered to `Triki Remote`, or quit the app and run:
+
+```sh
+"$HOME/Applications/Triki Remote.app/Contents/MacOS/Triki Remote"
+```
+
+## Protocol reference
+
+The native Swift app was implemented separately using [TRIKI-Control](https://github.com/koksny/TRIKI-Control) by Wojciech "Koksny" Górny as a BLE protocol reference, at commit `8d1bdff17a419930f7a89c5244928b199d4e6ee3`. Its [MIT license](https://github.com/koksny/TRIKI-Control/blob/8d1bdff17a419930f7a89c5244928b199d4e6ee3/LICENSE) was inspected before implementation. The current app does not bundle the reference project's Python/Android application, architecture, or artwork. The reference supplied the service/characteristic UUIDs, initialization sequence, and packet-layout information below.
+
+| Purpose | UUID |
+| --- | --- |
+| Nordic UART service | `6E400001-B5A3-F393-E0A9-E50E24DCCA9E` |
+| RX initialization write | `6E400002-B5A3-F393-E0A9-E50E24DCCA9E` |
+| TX / IMU notifications | `6E400003-B5A3-F393-E0A9-E50E24DCCA9E` |
+
+Subscribe to TX, wait for confirmation, then write `20 10 00 D0 07 34 00 03` to RX without response (~53 Hz). No additional handshake or keepalive is used by the reference sequence. See its [protocol notes](https://github.com/koksny/TRIKI-Control/blob/8d1bdff17a419930f7a89c5244928b199d4e6ee3/docs/protocol.md).
+
+Frames are 14 bytes: `22`, button state `00/01`, six signed little-endian IMU channels. The reference calls the second byte a packet ID; this controller's captured press/release cycles confirmed the requested button mapping. Notifications can contain partial/multiple frames (observed 20/20/2-byte chunks), so assembly preserves frame order. Unsupported states `02…0F` are consumed as whole frames.
+
+## Licensing, attribution, and branding
+
+### Reference project and repository history
+
+TRIKI-Control is copyright © 2026 Wojciech "Koksny" Górny and licensed under MIT. MIT permits use, modification, redistribution, sublicensing, and commercial sale, subject to its terms. When distributing copies or substantial portions of the covered software or documentation, preserve the copyright and permission notice; a link or acknowledgment alone does not replace that notice. MIT does not require publishing the source of separately written application code. See the [MIT license text](https://opensource.org/license/mit).
+
+**This repository retains TRIKI-Control's Git history.** A separately implemented Swift app does not make that history independently authored. Distributing a clone with that history also distributes upstream materials, whose notices must remain intact. [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) preserves the full upstream MIT notice and identifies its scope. Keep it with source distributions containing those materials, and include it with any binary distribution incorporating covered upstream code or assets. Do not remove license notices from historical upstream files.
+
+The new Swift implementation, build scripts, tests, and documentation are copyright © 2026 Denys Iliasov and available under the [MIT license](LICENSE). Historical upstream materials retain their original copyright and license. The new code license excludes `AppIcon.png`, `TrikiRemote.icns`, and third-party trademarks; it does not grant reuse rights to those materials.
+
+### Icon and third-party names
+
+`AppIcon.png` is the editable high-resolution artwork source, generated with imagegen from the user's supplied silver TRIKI cap image. `TrikiRemote.icns` is the packaged 16–1024 px icon used by both build paths. The PNG is retained as a source asset, not bundled at runtime. This artwork was not taken from TRIKI-Control. On October 3, 2026, the maintainer confirmed permission to use the supplied image and branding for this application. This records the maintainer's confirmation, not an independent rights audit or a sublicense to downstream users. AI generation alone does not establish those permissions.
+
+Triki Remote is an unofficial compatibility utility and is not affiliated with or endorsed by TRIKI-Control's author, Caps Apps, Żabka, Apple, or Google. Third-party product names and marks belong to their respective owners. Neither the upstream software license nor this acknowledgment grants rights to third-party logos or branding. Names and logos can raise trademark issues separately from copyright; see the [U.S. Copyright Office's explanation](https://www.copyright.gov/help/faq/faq-protect.html) for that distinction in U.S. law.
+
+For redistribution or rebranding, obtain any needed permissions for the excluded artwork and marks or replace them with your own assets. This records provenance and known licensing limits, not a jurisdiction-specific legal clearance.
+
+## Distribution status
+
+GitHub Actions runs tests, checks the Xcode project, and packages a universal DMG on pushes to `main` and pull requests. Successful builds retain a DMG artifact for 14 days. Pushing a `triki-v*` tag runs the same checks and publishes a **prerelease** with the DMG and SHA-256 checksum; release notes come from `RELEASE_NOTES.md`. Failed builds do not publish a release. Actions are pinned to commit hashes and the publishing job alone receives repository write permission.
+
+Local release builds enable Hardened Runtime and the Apple Events entitlement; compilation treats warnings as errors. The same settings apply in Xcode. This is a locally built application, **not a notarized public release**.
+
+To prepare a distributable build, supply your own Developer ID Application identity:
+
+```sh
+TRIKI_ARCHS="arm64 x86_64" TRIKI_SIGN_IDENTITY="Developer ID Application: YOUR NAME (TEAMID)" ./build.sh
+```
+
+Then notarize and staple the app using your Apple Developer credentials and complete the manual hardware checks above. See [Apple's notarization requirements](https://developer.apple.com/documentation/security/notarizing-macos-software-before-distribution). No signing identity, credentials, or notarization ticket is included in this repository.

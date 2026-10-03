@@ -1,6 +1,11 @@
+Scope: This license covers the new Triki Remote source code, build scripts,
+tests, and documentation. It excludes AppIcon.png, TrikiRemote.icns and
+third-party trademarks. Historical TRIKI-Control materials retain their
+original copyright and MIT license; see THIRD_PARTY_NOTICES.md.
+
 MIT License
 
-Copyright (c) 2026 Wojciech "Koksny" Górny
+Copyright (c) 2026 Denys Iliasov
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
